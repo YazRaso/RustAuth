@@ -1,4 +1,4 @@
-use axum::{Json, extract::Extension};
+use axum::{Json};
 use serde::{Deserialize, Serialize};
 use axum::http::StatusCode;
 
