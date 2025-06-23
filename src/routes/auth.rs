@@ -8,6 +8,8 @@ use sqlx::PgPool;
 use crate::utils::auth::{hash_password, verify_password};
 use rand::{RngCore, rngs::OsRng};
 use jsonwebtoken::{encode, Header, EncodingKey};
+
+
 #[derive(Deserialize)]
 pub struct AuthPayload {
     pub username: String,
@@ -24,6 +26,7 @@ struct Claims {
     sub: String,
     exp: usize,
 }
+
 
 // POST /register
 pub async fn register_handler(
@@ -47,14 +50,14 @@ pub async fn register_handler(
 }
 
 // create_jwt: creates json web tokens for user authorization
-fn create_jwt(userid: str) -> Result<String, jsonwebtoken::errors::Error> {
-    seconds_to_expiry = 300
-    let secret_key = generate_secret_key() 
+fn create_jwt(userid: &str) -> Result<String, jsonwebtoken::errors::Error> {
+    let seconds_to_expiry = 300;
+    let secret_key = generate_secret_key(); 
     let claims = Claims {
     sub: userid.to_owned(),
     exp: seconds_to_expiry
     };
-    encode(&Header::default(), &claims, &EncodingKey::from_secret(secret_key))
+    encode(&Header::default(), &claims, &EncodingKey::from_secret(&secret_key))
 }
 
 fn generate_secret_key() -> [u8; 32] {
@@ -81,7 +84,7 @@ pub async fn login_handler(
             if let Some(ref hash) = row.password {
                 if verify_password(&payload.password, hash) {
                     return Json(TokenResponse {
-                        token: create_jwt(record).into(),
+                        token: create_jwt(&payload.username).unwrap_or_default(),
                     })
                     .into_response();
                 }
