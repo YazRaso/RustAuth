@@ -15,8 +15,8 @@ use routes::auth::{register_handler, login_handler, me_handler};
 async fn main() {
     // Load Database
     dotenv().ok();
-    let private_key = env::var("PRIVATE_KEY").expect("Private key must be set");
-    let secret_key = Arc::new(private_key.into_bytes());
+    let jwt_secret = env::var("PRIVATE_KEY").expect("Private key must be set");
+    let secret_key = Arc::new(jwt_secret.into_bytes());
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     // Connect Database
