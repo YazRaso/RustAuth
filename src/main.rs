@@ -3,7 +3,7 @@ use axum::{
     Router,
     Extension,
 };
-use std::{env, net::SocketAddr};
+use std::{sync::Arc, env, net::SocketAddr};
 use tokio::net::TcpListener;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
@@ -13,24 +13,33 @@ use routes::auth::{register_handler, login_handler, me_handler};
 
 #[tokio::main]
 async fn main() {
+    // Load Database
     dotenv().ok();
+    let private_key = env::var("PRIVATE_KEY").expect("Private key must be set");
+    let secret_key = Arc::new(private_key.into_bytes());
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
+    // Connect Database
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
         .await
         .expect("Failed to connect to the database");
 
+    // Create routes
     let app = Router::new()
         .route("/register", post(register_handler))
         .route("/login", post(login_handler))
         .route("/me", get(me_handler))
-        .layer(Extension(pool.clone())); // Make pool available to routes
+        // Make database and secret key available
+        .layer(Extension(pool.clone()))
+        .layer(Extension(secret_key.clone()));
 
+    // Open socket amd listen
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let listener = TcpListener::bind(addr).await.unwrap();
 
+    // Print auth service is running
     println!("🚀 Auth service running at http://{}", addr);
     axum::serve(listener, app.into_make_service())
         .await
