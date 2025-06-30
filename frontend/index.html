@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustAuth Test Frontend</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        input, button { margin: 0.5em 0; padding: 0.5em; }
+        .section { margin-bottom: 2em; }
+        .response { margin-top: 1em; color: #333; }
+    </style>
+</head>
+<body>
+    <h1>RustAuth Microservice Tester</h1>
+
+    <div class="section">
+        <h2>Register</h2>
+        <input id="reg-username" type="text" placeholder="Username">
+        <input id="reg-password" type="password" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <div id="register-response" class="response"></div>
+    </div>
+
+    <div class="section">
+        <h2>Login</h2>
+        <input id="login-username" type="text" placeholder="Username">
+        <input id="login-password" type="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <div id="login-response" class="response"></div>
+    </div>
+
+    <div class="section">
+        <h2>Get /me</h2>
+        <button onclick="getMe()">Fetch /me</button>
+        <div id="me-response" class="response"></div>
+    </div>
+
+    <script>
+        let jwtToken = '';
+        const apiBase = 'http://127.0.0.1:3000';
+
+        async function register() {
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const res = await fetch(`${apiBase}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            document.getElementById('register-response').textContent = res.status === 201 ? 'Registration successful!' : `Error: ${await res.text()}`;
+        }
+
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const res = await fetch(`${apiBase}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                jwtToken = data.token;
+                document.getElementById('login-response').textContent = 'Login successful! JWT stored.';
+            } else {
+                document.getElementById('login-response').textContent = `Error: ${await res.text()}`;
+            }
+        }
+
+        async function getMe() {
+            if (!jwtToken) {
+                document.getElementById('me-response').textContent = 'Please login first.';
+                return;
+            }
+            const res = await fetch(`${apiBase}/me`, {
+                headers: { 'Authorization': `Bearer ${jwtToken}` }
+            });
+            if (res.ok) {
+                document.getElementById('me-response').textContent = await res.text();
+            } else {
+                document.getElementById('me-response').textContent = `Error: ${await res.text()}`;
+            }
+        }
+    </script>
+</body>
+</html>

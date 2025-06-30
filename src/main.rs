@@ -10,6 +10,7 @@ use sqlx::postgres::PgPoolOptions;
 pub mod utils;
 mod routes;
 use routes::auth::{register_handler, login_handler, me_handler};
+use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() {
@@ -18,6 +19,7 @@ async fn main() {
     let jwt_secret = env::var("PRIVATE_KEY").expect("Private key must be set");
     let secret_key = Arc::new(jwt_secret.into_bytes());
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    println!("Using database URL: {}", database_url);
 
     // Connect Database
     let pool = PgPoolOptions::new()
@@ -33,7 +35,8 @@ async fn main() {
         .route("/me", get(me_handler))
         // Make database and secret key available
         .layer(Extension(pool.clone()))
-        .layer(Extension(secret_key.clone()));
+        .layer(Extension(secret_key.clone()))
+        .layer(CorsLayer::permissive());
 
     // Open socket amd listen
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
