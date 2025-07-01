@@ -75,6 +75,7 @@ RustAuth/
 - `DATABASE_URL`: PostgreSQL connection string.
 - `PRIVATE_KEY`: Secret key for signing JWTs.
 
+See [example_env.md](./example_env.md) for a sample `.env` file and instructions on generating a private key.
 ---
 
 ## Database Schema
